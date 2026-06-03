@@ -17,9 +17,9 @@ type Markt = 'b2b' | 'b2c' | 'combo';
 type CategorieId = 'digitaal' | 'fysiek-product' | 'fysiek-dienst';
 
 const MARKT_OPTIES: { id: Markt; label: string; sub: string }[] = [
-  { id: 'b2b',   label: 'Alleen B2B',                    sub: 'Ik verkoop uitsluitend aan bedrijven' },
-  { id: 'b2c',   label: 'Alleen B2C',                    sub: 'Ik verkoop uitsluitend aan consumenten' },
-  { id: 'combo', label: 'Combinatie: B2B én B2C',        sub: 'Ik verkoop aan zowel bedrijven als consumenten' },
+  { id: 'b2b',   label: 'Alleen B2B',             sub: 'Ik verkoop uitsluitend aan bedrijven' },
+  { id: 'b2c',   label: 'Alleen B2C',             sub: 'Ik verkoop uitsluitend aan consumenten' },
+  { id: 'combo', label: 'Combinatie: B2B én B2C', sub: 'Ik verkoop aan zowel bedrijven als consumenten' },
 ];
 
 const CATEGORIEEN: { id: CategorieId; label: string }[] = [
@@ -51,10 +51,8 @@ function KopieerBlok({ titel, tekst }: { titel: string; tekst: string }) {
   const [gekopieerd, setGekopieerd] = useState(false);
 
   const kopieer = async () => {
-    let gelukt = false;
     try {
       await navigator.clipboard.writeText(tekst);
-      gelukt = true;
     } catch {
       try {
         const el = document.createElement('textarea');
@@ -64,16 +62,14 @@ function KopieerBlok({ titel, tekst }: { titel: string; tekst: string }) {
         el.style.left = '-9999px';
         document.body.appendChild(el);
         el.select();
-        gelukt = document.execCommand('copy');
+        document.execCommand('copy');
         document.body.removeChild(el);
       } catch {
-        gelukt = false;
+        return;
       }
     }
-    if (gelukt) {
-      setGekopieerd(true);
-      setTimeout(() => setGekopieerd(false), 1500);
-    }
+    setGekopieerd(true);
+    setTimeout(() => setGekopieerd(false), 1500);
   };
 
   return (
@@ -95,6 +91,14 @@ function KopieerBlok({ titel, tekst }: { titel: string; tekst: string }) {
   );
 }
 
+const uitbreidingKnopStijl = (actief: boolean, actiefKleur: string) => ({
+  flex: 1, padding: '0.65rem', borderRadius: 10, fontFamily: 'inherit',
+  fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
+  border: `2px solid ${actief ? actiefKleur : C.darkSlate + '25'}`,
+  background: actief ? actiefKleur + '15' : C.white,
+  color: actief ? actiefKleur : C.darkSlate,
+} as const);
+
 export default function AlgvwHerroepingsrecht() {
   const [stap, setStap]               = useState<1 | 2 | 3>(1);
   const [markt, setMarkt]             = useState<Markt | null>(null);
@@ -114,12 +118,7 @@ export default function AlgvwHerroepingsrecht() {
 
   const kiesMarkt = (m: Markt) => {
     setMarkt(m);
-    if (m === 'b2b') {
-      setGekozen(new Set());
-      setStap(3);
-    } else {
-      setStap(2);
-    }
+    setStap(m === 'b2b' ? 3 : 2);
   };
 
   const toggleCategorie = (id: CategorieId) => {
@@ -131,9 +130,8 @@ export default function AlgvwHerroepingsrecht() {
   };
 
   const terug = () => {
-    if (stap === 3 && markt === 'b2b') { setStap(1); return; }
-    if (stap === 3) { setStap(2); return; }
-    if (stap === 2) { setStap(1); return; }
+    setUitbreiding(null);
+    setStap(stap === 3 && markt === 'b2b' ? 1 : (stap - 1) as 1 | 2);
   };
 
   const resultatenIds: ('b2b' | CategorieId)[] =
@@ -201,9 +199,15 @@ export default function AlgvwHerroepingsrecht() {
         {/* Stap 2: categorieën (alleen B2C of combo) */}
         {stap === 2 && (
           <div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: C.darkSlate, marginBottom: 12 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: C.darkSlate, marginBottom: 4 }}>
               Wat lever jij aan consumenten?
             </p>
+            {markt === 'combo' && (
+              <p style={{ fontSize: 12, color: C.darkSlate + '60', marginBottom: 12, lineHeight: 1.5 }}>
+                Je B2B-klanten vallen hier buiten.
+              </p>
+            )}
+            {markt !== 'combo' && <div style={{ marginBottom: 12 }} />}
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 10, marginBottom: 20 }}>
               {CATEGORIEEN.map(c => {
                 const actief = gekozen.has(c.id);
@@ -282,24 +286,10 @@ export default function AlgvwHerroepingsrecht() {
                   Ben je van plan om op korte termijn je aanbod uit te breiden?
                 </p>
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button onClick={() => setUitbreiding(true)}
-                    style={{
-                      flex: 1, padding: '0.65rem', borderRadius: 10, fontFamily: 'inherit',
-                      fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
-                      border: `2px solid ${uitbreiding === true ? C.orange : C.darkSlate + '25'}`,
-                      background: uitbreiding === true ? C.orange + '15' : C.white,
-                      color: uitbreiding === true ? C.orange : C.darkSlate,
-                    }}>
+                  <button onClick={() => setUitbreiding(true)} style={uitbreidingKnopStijl(uitbreiding === true, C.orange)}>
                     Ja
                   </button>
-                  <button onClick={() => setUitbreiding(false)}
-                    style={{
-                      flex: 1, padding: '0.65rem', borderRadius: 10, fontFamily: 'inherit',
-                      fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
-                      border: `2px solid ${uitbreiding === false ? C.darkGreen : C.darkSlate + '25'}`,
-                      background: uitbreiding === false ? C.darkGreen + '12' : C.white,
-                      color: uitbreiding === false ? C.darkGreen : C.darkSlate,
-                    }}>
+                  <button onClick={() => setUitbreiding(false)} style={uitbreidingKnopStijl(uitbreiding === false, C.darkGreen)}>
                     Nee, ik ben klaar
                   </button>
                 </div>
