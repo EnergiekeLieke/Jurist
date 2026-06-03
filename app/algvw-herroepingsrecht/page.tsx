@@ -137,7 +137,10 @@ export default function AlgvwHerroepingsrecht() {
   const resultatenIds: ('b2b' | CategorieId)[] =
     markt === 'b2b'
       ? ['b2b']
-      : CATEGORIEEN.filter(c => gekozen.has(c.id)).map(c => c.id);
+      : [
+          ...(markt === 'combo' ? ['b2b' as const] : []),
+          ...CATEGORIEEN.filter(c => gekozen.has(c.id)).map(c => c.id),
+        ];
 
   return (
     <div style={{ background: C.cream, minHeight: '100vh', padding: '1.5rem 1.25rem',
