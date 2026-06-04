@@ -138,7 +138,7 @@ export default function AlgvwHerroepingsrecht() {
 
   return (
     <div style={{ background: C.lichtgroen, minHeight: '100vh', padding: '2rem 1.25rem',
-      fontFamily: 'var(--font-montserrat), system-ui, sans-serif',
+      fontFamily: 'Montserrat, system-ui, sans-serif',
       fontWeight: 300, color: C.zwart }}>
       <div style={{ maxWidth: 580, margin: '0 auto' }}>
 
